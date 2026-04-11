@@ -561,10 +561,22 @@ function saveEntry(){
     entries.push(newEntry);
     persist();
     if(GAS_URL){
-      fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'addEntry',date,type:iType==='expense'?'支出':'収入',category:cat,subCategory:ttl,amount:amt,paymentMethod:pay,memo})
-      }).catch(()=>{});
-    }
+  // GASはリダイレクトがあるためURLパラメータで送信
+  const params = new URLSearchParams({
+    action:        'addEntry',
+    date:          date,
+    type:          iType === 'expense' ? '支出' : '収入',
+    category:      cat,
+    title:         ttl,
+    amount:        amt,
+    paymentMethod: pay,
+    memo:          memo
+  });
+  fetch(GAS_URL + '?' + params.toString(), {
+    method: 'GET',
+    mode:   'no-cors'
+  }).catch(()=>{});
+}
     toast('保存しました ✓');
   }
   amtStr='0'; updAmt();
