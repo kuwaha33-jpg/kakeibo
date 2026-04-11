@@ -7,88 +7,61 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>家計簿</title>
 <style>
-/* 完全リセット */
 html, body, div, span, button, input, select, svg, path {
   margin: 0; padding: 0; box-sizing: border-box;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   -webkit-appearance: none !important;
   appearance: none !important;
 }
-html {
-  height: 100%;
-}
+html { height: 100%; }
 body {
-  height: 100%;
-  overflow: hidden;
+  height: 100%; overflow: hidden;
   font-family: -apple-system, 'Hiragino Sans', sans-serif;
-  color: #1A1A1A;
-  background: #F2F2F7;
+  color: #1A1A1A; background: #F2F2F7;
   -webkit-text-size-adjust: 100%;
 }
-#app {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #F2F2F7;
-}
+#app { width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #F2F2F7; }
 .scr { display: none; flex-direction: column; flex: 1; overflow: hidden; }
 .scr.on { display: flex; }
-.sb {
-  flex: 1;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 80px;
-}
+.sb { flex: 1; overflow-y: scroll; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
 
-/* ヘッダー */
+/* ── ヘッダー（タイトルのみ、月ナビは別行） ── */
 .hdr {
-height: 52px;
 background: #FFFFFF;
 border-bottom: 1px solid #E5E5EA;
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 0 16px;
 flex-shrink: 0;
+}
+.hdr-top {
+height: 52px;
+display: flex; align-items: center;
+padding: 0 16px;
 }
 .hdr-t { font-size: 20px; font-weight: 700; color: #1A1A1A; }
 
-.mnav {
+/* 月ナビを別行に（カメラと重ならない） */
+.mnav-row {
 display: flex;
 align-items: center;
-background: #EFEFEF;
-border-radius: 18px;
-padding: 4px 6px;
-gap: 0;
+justify-content: center;
+padding: 6px 16px 10px;
+}
+.mnav {
+display: flex; align-items: center;
+background: #EFEFEF; border-radius: 20px;
+padding: 5px 8px; gap: 0;
 }
 .mnav button {
-background: transparent !important;
-border: none !important;
-outline: none !important;
-font-size: 18px;
-font-weight: 700;
-color: #555555;
-padding: 2px 8px;
-cursor: pointer;
-border-radius: 6px;
-line-height: 1;
+background: transparent !important; border: none !important; outline: none !important;
+font-size: 20px; font-weight: 700; color: #555555;
+padding: 3px 12px; cursor: pointer; border-radius: 8px; line-height: 1;
 -webkit-appearance: none !important;
 }
 .mnav-l {
-font-size: 13px;
-font-weight: 600;
-color: #1A1A1A;
-min-width: 76px;
-text-align: center;
+font-size: 15px; font-weight: 600; color: #1A1A1A;
+min-width: 90px; text-align: center;
 }
 
-/* セクションラベル */
 .sec { padding: 12px 16px 6px; font-size: 11px; font-weight: 700; color: #AAAAAA; text-transform: uppercase; letter-spacing: 0.8px; }
-
-/* カード共通 */
 .card { margin: 0 14px 10px; background: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 
 /* カテゴリ別 */
@@ -101,88 +74,58 @@ text-align: center;
 .bd-pct { font-size: 11px; font-weight: 600; color: #AAAAAA; min-width: 30px; text-align: right; }
 .bd-amt { font-size: 12px; font-weight: 600; color: #1A1A1A; min-width: 62px; text-align: right; }
 
-/* 履歴 */
+/* 履歴（タップで操作メニュー表示） */
 .ents { margin: 0 14px; }
-.ent { background: #FFFFFF; border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.ent {
+background: #FFFFFF; border-radius: 12px; padding: 10px 12px;
+display: flex; align-items: center; gap: 10px;
+margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+cursor: pointer; transition: opacity 0.15s;
+}
+.ent:active { opacity: 0.7; }
 .ent-ico { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .ent-info { flex: 1; min-width: 0; }
 .ent-cat { font-size: 13px; font-weight: 700; color: #1A1A1A; }
 .ent-ttl { font-size: 12px; color: #666666; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ent-sub { font-size: 11px; color: #AAAAAA; margin-top: 1px; }
 .ent-amt { font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.ent-arrow { font-size: 12px; color: #CCCCCC; flex-shrink: 0; margin-left: 2px; }
 
 /* ボトムナビ */
-.bnav {
-height: 64px;
-background: #FFFFFF;
-border-top: 1px solid #E5E5EA;
-display: flex;
-align-items: center;
-flex-shrink: 0;
-}
+.bnav { height: 64px; background: #FFFFFF; border-top: 1px solid #E5E5EA; display: flex; align-items: center; flex-shrink: 0; }
 .nb {
-flex: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-gap: 2px;
-border: none !important;
-outline: none !important;
-background: transparent !important;
-cursor: pointer;
-padding: 6px 0 10px;
-height: 100%;
--webkit-appearance: none !important;
+flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 2px; border: none !important; outline: none !important; background: transparent !important;
+cursor: pointer; padding: 6px 0 10px; height: 100%; -webkit-appearance: none !important;
 }
 .nb-ico { font-size: 20px; line-height: 1; }
 .nb-lbl { font-size: 10px; font-weight: 600; color: #AAAAAA; }
 .nb.on .nb-lbl { color: #2D6A4F; }
 
-/* ── 入力画面 ── */
+/* ── 入力 / 編集画面 ── */
 .inp-hdr {
-height: 52px; background: #FFFFFF;
-border-bottom: 1px solid #E5E5EA;
-display: flex; align-items: center; gap: 10px;
-padding: 0 16px; flex-shrink: 0;
+height: 52px; background: #FFFFFF; border-bottom: 1px solid #E5E5EA;
+display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0;
 }
 .back {
-width: 32px; height: 32px;
-background: #EFEFEF !important;
-border: none !important; outline: none !important;
-border-radius: 9px;
+width: 32px; height: 32px; background: #EFEFEF !important;
+border: none !important; outline: none !important; border-radius: 9px;
 display: flex; align-items: center; justify-content: center;
-font-size: 17px; font-weight: 700;
-color: #555555;
-cursor: pointer;
--webkit-appearance: none !important;
+font-size: 17px; font-weight: 700; color: #555555; cursor: pointer; -webkit-appearance: none !important;
 }
-.inp-t { font-size: 17px; font-weight: 700; color: #1A1A1A; }
+.inp-t { font-size: 17px; font-weight: 700; color: #1A1A1A; flex: 1; }
 
-.ttog {
-margin: 12px 14px;
-background: #EFEFEF;
-border-radius: 12px; padding: 3px;
-display: grid; grid-template-columns: 1fr 1fr;
-}
+.ttog { margin: 12px 14px; background: #EFEFEF; border-radius: 12px; padding: 3px; display: grid; grid-template-columns: 1fr 1fr; }
 .tb {
-padding: 9px; text-align: center;
-font-size: 14px; font-weight: 600;
-border-radius: 10px;
-border: none !important; outline: none !important;
-background: transparent !important;
-color: #AAAAAA;
-cursor: pointer; font-family: inherit;
+padding: 9px; text-align: center; font-size: 14px; font-weight: 600;
+border-radius: 10px; border: none !important; outline: none !important;
+background: transparent !important; color: #AAAAAA; cursor: pointer; font-family: inherit;
 -webkit-appearance: none !important;
 }
 .tb.ae { background: #FFFFFF !important; color: #C0392B; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 .tb.ai { background: #FFFFFF !important; color: #1A6B3C; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
-.amt-box {
-margin: 0 14px 10px; background: #FFFFFF;
-border-radius: 14px; padding: 12px 16px;
-text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-}
+.amt-box { margin: 0 14px 10px; background: #FFFFFF; border-radius: 14px; padding: 12px 16px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
 .amt-v { font-size: 32px; font-weight: 700; color: #1A1A1A; letter-spacing: -0.5px; }
 .amt-y { font-size: 17px; color: #AAAAAA; margin-right: 2px; }
 .cur { display: inline-block; width: 2px; height: 28px; background: #2D6A4F; margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
@@ -190,24 +133,14 @@ text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
 
 .numpad { margin: 0 14px; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
 .np {
-background: #FFFFFF !important;
-border: none !important; outline: none !important;
-border-radius: 11px;
-padding: 14px 0;
-font-size: 22px; font-weight: 600;
-color: #1A1A1A !important;
--webkit-text-fill-color: #1A1A1A !important;
-cursor: pointer;
-box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-font-family: inherit;
+background: #FFFFFF !important; border: none !important; outline: none !important;
+border-radius: 11px; padding: 14px 0; font-size: 22px; font-weight: 600;
+color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
+cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.08); font-family: inherit;
 -webkit-appearance: none !important;
 }
 .np:active { opacity: 0.5; }
-.np.del {
-font-size: 15px;
-color: #666666 !important;
--webkit-text-fill-color: #666666 !important;
-}
+.np.del { font-size: 15px; color: #666666 !important; -webkit-text-fill-color: #666666 !important; }
 
 .form-card { margin: 10px 14px 0; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
 .fr { display: flex; align-items: center; padding: 13px 14px; border-bottom: 0.5px solid #E5E5EA; gap: 8px; }
@@ -216,15 +149,13 @@ color: #666666 !important;
 .fr select {
 -webkit-appearance: none !important; appearance: none !important;
 flex: 1; border: none !important; outline: none !important; background: none;
-font-size: 14px; font-weight: 500;
-color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
+font-size: 14px; font-weight: 500; color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
 font-family: inherit; text-align: right; cursor: pointer;
 }
 .fr input[type=“text”], .fr input[type=“date”] {
 -webkit-appearance: none !important; appearance: none !important;
 flex: 1; border: none !important; outline: none !important; background: none;
-font-size: 14px; font-weight: 500;
-color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
+font-size: 14px; font-weight: 500; color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
 font-family: inherit; text-align: right;
 }
 .arr { color: #AAAAAA; font-size: 11px; flex-shrink: 0; }
@@ -232,12 +163,9 @@ font-family: inherit; text-align: right;
 /* ── 集計 ── */
 .stabs { margin: 12px 14px; background: #EFEFEF; border-radius: 10px; padding: 3px; display: grid; grid-template-columns: 1fr 1fr; }
 .stab {
-padding: 9px; text-align: center;
-font-size: 13px; font-weight: 600;
-border-radius: 8px;
-border: none !important; outline: none !important;
-background: transparent !important;
-color: #AAAAAA; font-family: inherit; cursor: pointer;
+padding: 9px; text-align: center; font-size: 13px; font-weight: 600;
+border-radius: 8px; border: none !important; outline: none !important;
+background: transparent !important; color: #AAAAAA; font-family: inherit; cursor: pointer;
 -webkit-appearance: none !important;
 }
 .stab.on { background: #FFFFFF !important; color: #1A1A1A; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
@@ -264,11 +192,7 @@ color: #AAAAAA; font-family: inherit; cursor: pointer;
 .bar-card { margin: 0 14px 12px; background: #FFFFFF; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
 .bar-area { display: flex; align-items: flex-end; gap: 4px; height: 90px; margin-bottom: 8px; }
 .bc { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1px; height: 100%; }
-.bs { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
 .bl { font-size: 9px; color: #AAAAAA; margin-top: 3px; }
-.bleg { display: flex; gap: 12px; font-size: 10px; color: #AAAAAA; }
-.bleg span { display: flex; align-items: center; gap: 4px; }
-.bleg i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 
 .sbd-card { margin: 0 14px 14px; background: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
 .sr { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid #E5E5EA; }
@@ -280,14 +204,58 @@ color: #AAAAAA; font-family: inherit; cursor: pointer;
 .sp { font-size: 11px; font-weight: 600; color: #AAAAAA; min-width: 30px; text-align: right; }
 .sa { font-size: 12px; font-weight: 600; color: #1A1A1A; min-width: 62px; text-align: right; }
 
+/* ── アクションシート（削除・編集メニュー） ── */
+.overlay {
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.45);
+z-index: 100;
+display: none; align-items: flex-end; justify-content: center;
+}
+.overlay.show { display: flex; }
+.action-sheet {
+width: 100%; max-width: 480px;
+background: transparent;
+padding: 8px 14px 34px;
+}
+.as-card {
+background: #FFFFFF;
+border-radius: 16px;
+overflow: hidden;
+margin-bottom: 10px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.as-title {
+padding: 14px 16px 10px;
+text-align: center;
+font-size: 12px; color: #AAAAAA; font-weight: 500;
+border-bottom: 0.5px solid #E5E5EA;
+}
+.as-btn {
+display: block; width: 100%;
+padding: 16px; text-align: center;
+font-size: 17px; font-weight: 500;
+border: none !important; outline: none !important;
+background: #FFFFFF !important;
+cursor: pointer; font-family: inherit;
+border-top: 0.5px solid #E5E5EA;
+-webkit-appearance: none !important;
+color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important;
+}
+.as-btn.red { color: #C0392B !important; -webkit-text-fill-color: #C0392B !important; }
+.as-btn.cancel {
+background: #FFFFFF !important;
+font-weight: 600; border-radius: 16px;
+color: #2D6A4F !important; -webkit-text-fill-color: #2D6A4F !important;
+}
+.as-btn:active { opacity: 0.6; }
+
 .toast {
 position: fixed; bottom: 76px; left: 50%;
 transform: translateX(-50%) translateY(12px);
 background: rgba(26,26,26,0.88); color: #FFFFFF;
 padding: 9px 18px; border-radius: 18px;
 font-size: 13px; font-weight: 500; opacity: 0;
-transition: all 0.25s; pointer-events: none;
-z-index: 9999; white-space: nowrap;
+transition: all 0.25s; pointer-events: none; z-index: 9999; white-space: nowrap;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -300,20 +268,22 @@ z-index: 9999; white-space: nowrap;
 <body>
 <div id="app">
 
-  <!-- ホーム -->
+  <!-- ════ ホーム ════ -->
 
   <div class="scr on" id="s-home">
     <div class="hdr">
-      <div class="hdr-t">家計簿</div>
-      <div class="mnav">
-        <button onclick="chM(-1)">‹</button>
-        <span class="mnav-l" id="h-mon"></span>
-        <button onclick="chM(1)">›</button>
+      <div class="hdr-top"><div class="hdr-t">家計簿</div></div>
+      <div class="mnav-row">
+        <div class="mnav">
+          <button onclick="chM(-1)">‹</button>
+          <span class="mnav-l" id="h-mon"></span>
+          <button onclick="chM(1)">›</button>
+        </div>
       </div>
     </div>
     <div class="sb">
-      <!-- サマリーカード：インラインで緑を確実に指定 -->
-      <div id="sum-card" style="margin:14px 14px 10px;border-radius:16px;padding:18px 16px 16px;background-color:#2D6A4F;position:relative;overflow:hidden;">
+      <!-- サマリーカード -->
+      <div style="margin:14px 14px 10px;border-radius:16px;padding:18px 16px 16px;background-color:#2D6A4F;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-40px;right:-30px;width:140px;height:140px;background:rgba(255,255,255,0.08);border-radius:50%;pointer-events:none;"></div>
         <div style="position:relative;z-index:1;">
           <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-bottom:4px;font-weight:500;">今月の収支</div>
@@ -334,13 +304,12 @@ z-index: 9999; white-space: nowrap;
       </div>
       <div class="sec">カテゴリ別支出</div>
       <div class="card" id="h-bd"></div>
-      <div class="sec">最近の履歴</div>
+      <div class="sec">最近の履歴　<span style="font-size:10px;font-weight:400;color:#CCCCCC;">（タップで編集・削除）</span></div>
       <div class="ents" id="h-ent"></div>
     </div>
     <div class="bnav">
       <button class="nb on" onclick="go('home')"><span class="nb-ico">🏠</span><span class="nb-lbl">ホーム</span></button>
-      <!-- ＋ボタン：インラインで緑を確実に指定 -->
-      <button onclick="openInput()" style="-webkit-appearance:none;appearance:none;flex:1;display:flex;align-items:center;justify-content:center;border:none;outline:none;background:transparent;cursor:pointer;height:100%;padding-bottom:8px;">
+      <button onclick="openInput(null)" style="-webkit-appearance:none;appearance:none;flex:1;display:flex;align-items:center;justify-content:center;border:none;outline:none;background:transparent;cursor:pointer;height:100%;padding-bottom:8px;">
         <div style="width:50px;height:50px;background-color:#2D6A4F;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-top:-8px;box-shadow:0 3px 10px rgba(45,106,79,0.4);">
           <span style="font-size:28px;color:#FFFFFF;font-weight:300;line-height:1;margin-top:-2px;">＋</span>
         </div>
@@ -349,12 +318,12 @@ z-index: 9999; white-space: nowrap;
     </div>
   </div>
 
-  <!-- 入力 -->
+  <!-- ════ 入力・編集画面 ════ -->
 
   <div class="scr" id="s-input">
     <div class="inp-hdr">
       <button class="back" onclick="go('home')">‹</button>
-      <div class="inp-t">収支を追加</div>
+      <div class="inp-t" id="inp-title">収支を追加</div>
     </div>
     <div class="sb">
       <div class="ttog">
@@ -380,25 +349,34 @@ z-index: 9999; white-space: nowrap;
       </div>
       <div class="form-card">
         <div class="fr"><span class="fl">カテゴリ</span><select id="f-cat"></select><span class="arr">›</span></div>
-        <div class="fr"><span class="fl">件名</span><input type="text" id="f-ttl" placeholder="例：スーパー"></div>
+        <div class="fr"><span class="fl">件名</span><input type="text" id="f-ttl" placeholder=""></div>
         <div class="fr"><span class="fl">日付</span><input type="date" id="f-date"><span class="arr">›</span></div>
-        <div class="fr"><span class="fl">支払方法</span><select id="f-pay"><option>カード</option><option>現金</option><option>電子マネー</option><option>振込</option><option>その他</option></select><span class="arr">›</span></div>
-        <div class="fr"><span class="fl">メモ</span><input type="text" id="f-memo" placeholder="任意"></div>
+        <div class="fr">
+          <span class="fl">支払方法</span>
+          <select id="f-pay">
+            <option>カード</option><option>現金</option>
+            <option>電子マネー</option><option>振込</option><option>その他</option>
+          </select>
+          <span class="arr">›</span>
+        </div>
+        <div class="fr"><span class="fl">メモ</span><input type="text" id="f-memo" placeholder=""></div>
       </div>
-      <!-- 保存ボタン：インラインで緑を確実に指定 -->
-      <button onclick="saveEntry()" style="-webkit-appearance:none;appearance:none;display:block;width:calc(100% - 28px);margin:12px 14px 80px;background-color:#2D6A4F;color:#FFFFFF;-webkit-text-fill-color:#FFFFFF;border:none;outline:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(45,106,79,0.35);">✓ 保存する</button>
+      <!-- 保存ボタン -->
+      <button id="save-btn" onclick="saveEntry()" style="-webkit-appearance:none;appearance:none;display:block;width:calc(100% - 28px);margin:12px 14px 80px;background-color:#2D6A4F;color:#FFFFFF;-webkit-text-fill-color:#FFFFFF;border:none;outline:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(45,106,79,0.35);">✓ 保存する</button>
     </div>
   </div>
 
-  <!-- 集計 -->
+  <!-- ════ 集計 ════ -->
 
   <div class="scr" id="s-stats">
     <div class="hdr">
-      <div class="hdr-t">集計</div>
-      <div class="mnav">
-        <button onclick="stPrev()">‹</button>
-        <span class="mnav-l" id="st-p"></span>
-        <button onclick="stNext()">›</button>
+      <div class="hdr-top"><div class="hdr-t">集計</div></div>
+      <div class="mnav-row">
+        <div class="mnav">
+          <button onclick="stPrev()">‹</button>
+          <span class="mnav-l" id="st-p"></span>
+          <button onclick="stNext()">›</button>
+        </div>
       </div>
     </div>
     <div class="sb">
@@ -421,9 +399,9 @@ z-index: 9999; white-space: nowrap;
       <div class="bar-card" id="bar-card" style="display:none">
         <div class="ctitle">月別 収入 / 支出</div>
         <div class="bar-area" id="bar-area"></div>
-        <div class="bleg">
-          <span><i style="background:#27AE60;display:inline-block;width:10px;height:10px;border-radius:2px;"></i>収入</span>
-          <span><i style="background:#E74C3C;display:inline-block;width:10px;height:10px;border-radius:2px;"></i>支出</span>
+        <div style="display:flex;gap:12px;font-size:10px;color:#AAAAAA;">
+          <span style="display:flex;align-items:center;gap:4px;"><i style="background:#27AE60;display:inline-block;width:10px;height:10px;border-radius:2px;"></i>収入</span>
+          <span style="display:flex;align-items:center;gap:4px;"><i style="background:#E74C3C;display:inline-block;width:10px;height:10px;border-radius:2px;"></i>支出</span>
         </div>
       </div>
       <div class="sec">カテゴリ別明細（割合付き）</div>
@@ -432,7 +410,7 @@ z-index: 9999; white-space: nowrap;
     </div>
     <div class="bnav">
       <button class="nb" onclick="go('home')"><span class="nb-ico">🏠</span><span class="nb-lbl">ホーム</span></button>
-      <button onclick="openInput()" style="-webkit-appearance:none;appearance:none;flex:1;display:flex;align-items:center;justify-content:center;border:none;outline:none;background:transparent;cursor:pointer;height:100%;padding-bottom:8px;">
+      <button onclick="openInput(null)" style="-webkit-appearance:none;appearance:none;flex:1;display:flex;align-items:center;justify-content:center;border:none;outline:none;background:transparent;cursor:pointer;height:100%;padding-bottom:8px;">
         <div style="width:50px;height:50px;background-color:#2D6A4F;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-top:-8px;box-shadow:0 3px 10px rgba(45,106,79,0.4);">
           <span style="font-size:28px;color:#FFFFFF;font-weight:300;line-height:1;margin-top:-2px;">＋</span>
         </div>
@@ -442,19 +420,28 @@ z-index: 9999; white-space: nowrap;
   </div>
 </div>
 
+<!-- アクションシート（編集・削除メニュー） -->
+
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="action-sheet">
+    <div class="as-card">
+      <div class="as-title" id="as-title">操作を選択</div>
+      <button class="as-btn" onclick="editEntry()">✏️　編集する</button>
+      <button class="as-btn red" onclick="deleteEntry()">🗑️　削除する</button>
+    </div>
+    <div class="as-card">
+      <button class="as-btn cancel" onclick="closeOverlay()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbx1vUMiQh5ss4qIcCR5QaOa_DhiY7OWxKsIX2LMZ3jpE4eSFYOweA7Coj_kV0p32szD8Q/exec'; // ← デプロイURLをここに貼り付ける
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzv7L_JxudoGBkZkqNuJLSX97tNqjAAHzxdNMuMcOurdLrQVfQqT9yhp7EoXypvVrzI0g/exec'; // ← デプロイURLをここに貼り付ける
 
-const INC = ['給与','ボーナス','その他収入'];
-const EXP = [
-  '01:住宅費','02:水道・光熱費','03:通信費',
-  '04:食費','05:外食費','06:日用品費','07:医療費',
-  '08:子供①:教育費','09:子供①:習い事','10:子供①:衣類・用品','11:子供①:イベント',
-  '12:子供②:教育費','13:子供②:習い事','14:子供②:衣類・用品','15:子供②:イベント',
-  '16:娯楽費','17:旅行代','18:キャンプ代','19:家具・家電','20:特別費','21:その他雑費'
-];
+const INC=['給与','ボーナス','その他収入'];
+const EXP=['01:住宅費','02:水道・光熱費','03:通信費','04:食費','05:外食費','06:日用品費','07:医療費','08:子供①:教育費','09:子供①:習い事','10:子供①:衣類・用品','11:子供①:イベント','12:子供②:教育費','13:子供②:習い事','14:子供②:衣類・用品','15:子供②:イベント','16:娯楽費','17:旅行代','18:キャンプ代','19:家具・家電','20:特別費','21:その他雑費'];
 const COLORS=['#2D6A4F','#40916C','#52B788','#E67E22','#CA6F1E','#BA4A00','#C0392B','#8E44AD','#7D3C98','#6C3483','#5B2C6F','#1A5276','#1F618D','#2471A3','#2980B9','#117A65','#0E6655','#0B5345','#5D6D7E','#4A5568','#2D3748'];
 const ICONS={'01:住宅費':'🏠','02:水道・光熱費':'💧','03:通信費':'📱','04:食費':'🛒','05:外食費':'🍽️','06:日用品費':'🧴','07:医療費':'💊','08:子供①:教育費':'🏫','09:子供①:習い事':'🎵','10:子供①:衣類・用品':'🍼','11:子供①:イベント':'🎉','12:子供②:教育費':'🏫','13:子供②:習い事':'🎵','14:子供②:衣類・用品':'👕','15:子供②:イベント':'🎂','16:娯楽費':'🎮','17:旅行代':'✈️','18:キャンプ代':'⛺','19:家具・家電':'🛋️','20:特別費':'⭐','21:その他雑費':'📦','給与':'💴','ボーナス':'💰','その他収入':'💳'};
 const CATBG={'01:住宅費':'#E8F5E9','02:水道・光熱費':'#E3F2FD','03:通信費':'#F3E5F5','04:食費':'#FFF3E0','05:外食費':'#FFF8E1','06:日用品費':'#E0F7FA','07:医療費':'#FCE4EC','08:子供①:教育費':'#EDE7F6','09:子供①:習い事':'#F3E5F5','10:子供①:衣類・用品':'#FBE9E7','11:子供①:イベント':'#FFF9C4','12:子供②:教育費':'#E8EAF6','13:子供②:習い事':'#EDE7F6','14:子供②:衣類・用品':'#FCE4EC','15:子供②:イベント':'#F9FBE7','16:娯楽費':'#E8F5E9','17:旅行代':'#E3F2FD','18:キャンプ代':'#F1F8E9','19:家具・家電':'#ECEFF1','20:特別費':'#FFFDE7','21:その他雑費':'#F5F5F5','給与':'#E8F5E9','ボーナス':'#F0FFF4','その他収入':'#E8F5E9'};
@@ -464,6 +451,10 @@ let curMon=new Date(); curMon.setDate(1);
 let iType='expense', amtStr='0';
 let stTab='monthly', stMon=new Date(), stYear=new Date().getFullYear();
 stMon.setDate(1);
+
+// 編集用
+let editId=null; // 編集中のentry id（nullなら新規）
+let selectedId=null; // アクションシートで選択中のid
 
 const fmt=n=>Number(n).toLocaleString('ja-JP');
 const fmtM=d=>`${d.getFullYear()}年${d.getMonth()+1}月`;
@@ -486,12 +477,34 @@ function go(name){
   if(name==='stats') renderStats();
 }
 
-function openInput(){
-  amtStr='0'; updAmt(); fillCats();
-  document.getElementById('f-date').value=todayStr();
-  document.getElementById('f-ttl').value='';
-  document.getElementById('f-memo').value='';
-  setType('expense');
+// ── 入力画面を開く（idがあれば編集モード）──
+function openInput(id){
+  editId = id;
+  const entry = id!=null ? entries.find(e=>e.id===id) : null;
+
+  document.getElementById('inp-title').textContent = entry ? '収支を編集' : '収支を追加';
+  document.getElementById('save-btn').textContent = entry ? '✓ 更新する' : '✓ 保存する';
+
+  if(entry){
+    amtStr = String(entry.amount);
+    setType(entry.type);
+    // カテゴリを設定してから値をセット
+    setTimeout(()=>{
+      document.getElementById('f-cat').value = entry.category;
+    },10);
+    document.getElementById('f-ttl').value = entry.title||'';
+    document.getElementById('f-date').value = entry.date;
+    document.getElementById('f-pay').value = entry.payment||'カード';
+    document.getElementById('f-memo').value = entry.memo||'';
+  } else {
+    amtStr='0';
+    setType('expense');
+    document.getElementById('f-ttl').value='';
+    document.getElementById('f-date').value=todayStr();
+    document.getElementById('f-pay').value='カード';
+    document.getElementById('f-memo').value='';
+  }
+  updAmt();
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-input').classList.add('on');
 }
@@ -505,11 +518,13 @@ function setType(t){
 
 function fillCats(){
   const sel=document.getElementById('f-cat');
+  const prev=sel.value;
   sel.innerHTML='';
   (iType==='expense'?EXP:INC).forEach(c=>{
     const o=document.createElement('option');
     o.value=c; o.textContent=c; sel.appendChild(o);
   });
+  if(prev) sel.value=prev;
 }
 
 function numpad(v){
@@ -530,23 +545,76 @@ function saveEntry(){
   const date=document.getElementById('f-date').value;
   const pay=document.getElementById('f-pay').value;
   const memo=document.getElementById('f-memo').value.trim();
-  entries.push({id:Date.now(),date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo});
-  persist();
-  if(GAS_URL){
-    fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'addEntry',date,type:iType==='expense'?'支出':'収入',category:cat,subCategory:ttl,amount:amt,paymentMethod:pay,memo})
-    }).catch(()=>{});
+
+  if(editId!=null){
+    // 編集モード：既存データを更新
+    const idx=entries.findIndex(e=>e.id===editId);
+    if(idx>=0){
+      entries[idx]={...entries[idx],date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo};
+    }
+    persist();
+    toast('更新しました ✓');
+    editId=null;
+  } else {
+    // 新規追加
+    const newEntry={id:Date.now(),date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo};
+    entries.push(newEntry);
+    persist();
+    if(GAS_URL){
+      fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'addEntry',date,type:iType==='expense'?'支出':'収入',category:cat,subCategory:ttl,amount:amt,paymentMethod:pay,memo})
+      }).catch(()=>{});
+    }
+    toast('保存しました ✓');
   }
-  toast('保存しました ✓');
   amtStr='0'; updAmt();
   go('home');
 }
 
+// ── アクションシート（タップで表示）──
+function showActionSheet(id){
+  selectedId=id;
+  const e=entries.find(e=>e.id===id);
+  if(!e) return;
+  const sign=e.type==='expense'?'-':'+';
+  document.getElementById('as-title').textContent=`${e.category}　${sign}¥${fmt(e.amount)}`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeOverlay(ev){
+  if(!ev || ev.target===document.getElementById('overlay')){
+    document.getElementById('overlay').classList.remove('show');
+    selectedId=null;
+  }
+}
+
+function editEntry(){
+  document.getElementById('overlay').classList.remove('show');
+  if(selectedId!=null) openInput(selectedId);
+}
+
+function deleteEntry(){
+  if(selectedId==null) return;
+  const e=entries.find(e=>e.id===selectedId);
+  entries=entries.filter(e=>e.id!==selectedId);
+  persist();
+  document.getElementById('overlay').classList.remove('show');
+  selectedId=null;
+  toast('削除しました');
+  // GAS側削除（rowIndexがある場合）
+  if(GAS_URL && e && e.rowIndex){
+    fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'deleteEntry',rowIndex:e.rowIndex})
+    }).catch(()=>{});
+  }
+  renderHome();
+}
+
+// ── ホーム ──
 function chM(d){
   curMon=new Date(curMon.getFullYear(),curMon.getMonth()+d,1);
   renderHome();
 }
-
 function getMonEnt(d){
   const y=d.getFullYear(),m=d.getMonth();
   return entries.filter(e=>{const ed=new Date(e.date);return ed.getFullYear()===y&&ed.getMonth()===m;});
@@ -576,7 +644,7 @@ function renderHome(){
     }).join('');
   }
 
-  const recent=[...mes].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,15);
+  const recent=[...mes].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,20);
   const ew=document.getElementById('h-ent');
   if(!recent.length){
     ew.innerHTML='<div class="empty"><div class="ei">✏️</div><p class="ep">下の ＋ から記録を追加</p></div>';
@@ -586,11 +654,21 @@ function renderHome(){
       const bg=CATBG[e.category]||'#F0F0F0';
       const sign=e.type==='expense'?'-':'+';
       const col=e.type==='expense'?'#C0392B':'#1A6B3C';
-      return `<div class="ent"><div class="ent-ico" style="background:${bg}">${ico}</div><div class="ent-info"><div class="ent-cat">${e.category}</div>${e.title?`<div class="ent-ttl">${e.title}</div>`:''} ${e.payment||e.memo?`<div class="ent-sub">${[e.payment,e.memo].filter(Boolean).join(' · ')}</div>`:''}</div><div class="ent-amt" style="color:${col}">${sign}¥${fmt(e.amount)}</div></div>`;
+      return `<div class="ent" onclick="showActionSheet(${e.id})">
+        <div class="ent-ico" style="background:${bg}">${ico}</div>
+        <div class="ent-info">
+          <div class="ent-cat">${e.category}</div>
+          ${e.title?`<div class="ent-ttl">${e.title}</div>`:''}
+          ${e.payment||e.memo?`<div class="ent-sub">${[e.payment,e.memo].filter(Boolean).join(' · ')}</div>`:''}
+        </div>
+        <div class="ent-amt" style="color:${col}">${sign}¥${fmt(e.amount)}</div>
+        <div class="ent-arrow">›</div>
+      </div>`;
     }).join('');
   }
 }
 
+// ── 集計 ──
 function setTab(t){
   stTab=t;
   document.getElementById('tab-m').classList.toggle('on',t==='monthly');
@@ -680,10 +758,11 @@ function renderBar(){
   area.innerHTML=data.map((d,m)=>{
     const ih=Math.max(Math.round(d.inc/mx*86),d.inc>0?4:0);
     const eh=Math.max(Math.round(d.exp/mx*86),d.exp>0?4:0);
-    return `<div class="bc"><div class="bs" style="height:${ih}px;background:#27AE60;border-radius:3px 3px 0 0;width:100%;min-height:${d.inc>0?4:0}px;"></div><div class="bs" style="height:${eh}px;background:#E74C3C;border-radius:3px 3px 0 0;width:100%;min-height:${d.exp>0?4:0}px;"></div><div class="bl">${m+1}</div></div>`;
+    return `<div class="bc"><div style="width:100%;height:${ih}px;background:#27AE60;border-radius:3px 3px 0 0;min-height:${d.inc>0?4:0}px;"></div><div style="width:100%;height:${eh}px;background:#E74C3C;border-radius:3px 3px 0 0;min-height:${d.exp>0?4:0}px;"></div><div class="bl">${m+1}</div></div>`;
   }).join('');
 }
 
+// ── 初期化 ──
 renderHome();
 if(GAS_URL){
   fetch(GAS_URL+'?action=getEntries',{mode:'cors'}).then(r=>r.json()).then(data=>{
@@ -691,7 +770,7 @@ if(GAS_URL){
       const ids=new Set(entries.map(e=>String(e.id)));let added=false;
       data.entries.forEach(e=>{
         if(!ids.has(String(e.rowIndex))){
-          entries.push({id:e.rowIndex,date:e.date,type:e.type==='収入'?'income':'expense',category:e.category,title:e.subCategory||'',amount:Number(e.amount),payment:e.paymentMethod||'',memo:e.memo||''});
+          entries.push({id:e.rowIndex,rowIndex:e.rowIndex,date:e.date,type:e.type==='収入'?'income':'expense',category:e.category,title:e.subCategory||'',amount:Number(e.amount),payment:e.paymentMethod||'',memo:e.memo||''});
           added=true;
         }
       });
