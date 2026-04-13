@@ -546,39 +546,26 @@ function saveEntry(){
   const pay=document.getElementById('f-pay').value;
   const memo=document.getElementById('f-memo').value.trim();
 
-  if(editId!=null){
-    // 編集モード：既存データを更新
-    const idx=entries.findIndex(e=>e.id===editId);
-    if(idx>=0){
-      entries[idx]={...entries[idx],date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo};
-    }
-    persist();
-    toast('更新しました ✓');
-    editId=null;
-  } else {
-    // 新規追加
-    const newEntry={id:Date.now(),date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo};
-    entries.push(newEntry);
-    persist();
-    if(GAS_URL){
-  // GASはリダイレクトがあるためURLパラメータで送信
-  const params = new URLSearchParams({
-    action:        'addEntry',
-    date:          date,
-    type:          iType === 'expense' ? '支出' : '収入',
-    category:      cat,
-    title:         ttl,
-    amount:        amt,
-    paymentMethod: pay,
-    memo:          memo
-  });
-  fetch(GAS_URL + '?' + params.toString(), {
-    method: 'GET',
-    mode:   'no-cors'
-  }).catch(()=>{});
-}
-    toast('保存しました ✓');
+  entries.push({id:Date.now(),date,type:iType,category:cat,title:ttl,amount:amt,payment:pay,memo});
+  persist();
+
+  if(GAS_URL){
+    // Safariのクロスドメイン制限を回避するためimgタグで送信
+    const type = iType === 'expense' ? encodeURIComponent('支出') : encodeURIComponent('収入');
+    const url = GAS_URL
+      + '?action=addEntry'
+      + '&date=' + encodeURIComponent(date)
+      + '&type=' + type
+      + '&category=' + encodeURIComponent(cat)
+      + '&title=' + encodeURIComponent(ttl)
+      + '&amount=' + amt
+      + '&paymentMethod=' + encodeURIComponent(pay)
+      + '&memo=' + encodeURIComponent(memo);
+    const img = new Image();
+    img.src = url;
   }
+
+  toast('保存しました ✓');
   amtStr='0'; updAmt();
   go('home');
 }
