@@ -432,7 +432,8 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxOqzwtRADPvv9yjcGwGOkp2yRIs-neMmguoYlUMnHGI5M2at9snP8IEBNGJVg7SIJxpg/exec'; // ← デプロイURLをここに貼り付ける
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbybqO7hDvTjY_2NylzIt0DwjCkmJzeHoQ_45bTkB_zY7lHh8ROHi2106_54VTLv04uzHQ/exec'; // ← デプロイURLをここに貼り付ける
+const GAS_PW  = 'rQNGCEu28PTiSOQMlkAYnBKz'; // パスワード（変更不要）
 
 const INC=['給与','ボーナス','その他収入'];
 const EXP=['01:住宅費','02:水道・光熱費','03:通信費','04:食費','05:外食費','06:日用品費','07:医療費','08:子供①:教育費','09:子供①:習い事','10:子供①:衣類・用品','11:子供①:イベント','12:子供②:教育費','13:子供②:習い事','14:子供②:衣類・用品','15:子供②:イベント','16:娯楽費','17:旅行代','18:キャンプ代','19:家具・家電','20:特別費','21:その他雑費'];
@@ -555,11 +556,11 @@ function saveEntry(){
     entries.push(newEntry);
     persist();
     if(GAS_URL){
-      // SafariのCORS制限を回避：XMLHttpRequestでno-corsリクエスト
       try {
         const typeStr = iType==='expense' ? '\u652F\u51FA' : '\u53CE\u5165';
         const params = [
           'action=addEntry',
+          'pw='            + encodeURIComponent(GAS_PW),
           'date='          + encodeURIComponent(date),
           'type='          + encodeURIComponent(typeStr),
           'category='      + encodeURIComponent(cat),
