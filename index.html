@@ -86,7 +86,9 @@ body {
 .ent:active { opacity: 0.7; }
 .ent-ico { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .ent-info { flex: 1; min-width: 0; }
-.ent-cat { font-size: 13px; font-weight: 700; color: #1A1A1A; }
+.ent-cat-row { display: flex; align-items: baseline; gap: 7px; }
+.ent-date { font-size: 11px; font-weight: 600; color: #2D6A4F; flex-shrink: 0; letter-spacing: 0.3px; }
+.ent-cat { font-size: 13px; font-weight: 700; color: #1A1A1A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ent-ttl { font-size: 12px; color: #666666; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ent-sub { font-size: 11px; color: #AAAAAA; margin-top: 1px; }
 .ent-amt { font-size: 14px; font-weight: 700; flex-shrink: 0; }
@@ -326,7 +328,7 @@ body {
       </div>
       <div class="sec">カテゴリ別支出</div>
       <div class="card" id="h-bd"></div>
-      <div class="sec">最近の履歴　<span style="font-size:10px;font-weight:400;color:#CCCCCC;">（タップで編集・削除）</span></div>
+      <div class="sec">履歴一覧　<span style="font-size:10px;font-weight:400;color:#CCCCCC;">（タップで編集・削除）</span></div>
       <div class="ents" id="h-ent"></div>
     </div>
     <div class="bnav">
@@ -792,7 +794,8 @@ function renderHome() {
     }).join('');
   }
 
-  var recent = mes.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); }).slice(0, 20);
+  // 全件表示（件数制限なし）、日付の新しい順
+  var recent = mes.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
   var ew = document.getElementById('h-ent');
   if (!recent.length) {
     ew.innerHTML = '<div class="empty"><div class="ei">\u270F\uFE0F</div><p class="ep">\u4E0B\u306E \uFF0B \u304B\u3089\u8A18\u9332\u3092\u8FFD\u52A0</p></div>';
@@ -802,10 +805,13 @@ function renderHome() {
       var bg = CATBG[e.category] || '#F0F0F0';
       var sign = e.type === 'expense' ? '-' : '+';
       var col = e.type === 'expense' ? '#C0392B' : '#1A6B3C';
+      // 日付を MM/DD 形式で整形
+      var dateParts = e.date.split('-');
+      var mmdd = dateParts.length === 3 ? (dateParts[1] + '/' + dateParts[2]) : e.date;
       var html = '<div class="ent" onclick="showActionSheet(' + e.id + ')">';
       html += '<div class="ent-ico" style="background:' + bg + '">' + ico + '</div>';
       html += '<div class="ent-info">';
-      html += '<div class="ent-cat">' + e.category + '</div>';
+      html += '<div class="ent-cat-row"><span class="ent-date">' + mmdd + '</span><span class="ent-cat">' + e.category + '</span></div>';
       if (e.title) html += '<div class="ent-ttl">' + e.title + '</div>';
       var sub = [e.payment, e.memo].filter(Boolean).join(' \u00B7 ');
       if (sub) html += '<div class="ent-sub">' + sub + '</div>';
