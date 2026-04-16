@@ -940,31 +940,43 @@ function renderBar() {
 renderHome();
 
 // GASからデータ取得（XMLHttpRequestで統一）
+// GASを正とし、ローカル未同期分だけ残す
 if (GAS_URL) {
   showLoading();
   gasRequest('action=getEntries&pw=' + encodeURIComponent(GAS_PW), function(data) {
     hideLoading();
     if (data && data.entries && data.entries.length) {
-      var ids = {};
-      entries.forEach(function(e) { ids[String(e.id)] = true; });
-      var added = false;
-      data.entries.forEach(function(e) {
-        if (!ids[String(e.rowIndex)]) {
-          entries.push({
-            id: e.rowIndex,
-            rowIndex: e.rowIndex,
-            date: e.date,
-            type: e.type === '\u53CE\u5165' ? 'income' : 'expense',
-            category: e.category,
-            title: e.title || '',
-            amount: Number(e.amount),
-            payment: e.paymentMethod || '',
-            memo: e.memo || ''
-          });
-          added = true;
-        }
+      // GASから来たデータをマスターとして構築
+      var gasEntries = data.entries.map(function(e) {
+        return {
+          id: e.rowIndex,
+          rowIndex: e.rowIndex,
+          date: e.date,
+          type: e.type === '\u53CE\u5165' ? 'income' : 'expense',
+          category: e.category,
+          title: e.title || '',
+          amount: Number(e.amount),
+          payment: e.paymentMethod || '',
+          memo: e.memo || ''
+        };
       });
-      if (added) { persist(); renderHome(); }
+      // ローカルにしかないエントリ（rowIndex無し＝未同期）を保持
+      var unsyncedLocal = entries.filter(function(e) { return !e.rowIndex; });
+      // 未同期分がGASデータと内容重複していないかチェック
+      var kept = [];
+      unsyncedLocal.forEach(function(loc) {
+        var isDup = false;
+        for (var i = 0; i < gasEntries.length; i++) {
+          var g = gasEntries[i];
+          if (g.date === loc.date && g.category === loc.category && g.amount === loc.amount && g.type === loc.type) {
+            isDup = true; break;
+          }
+        }
+        if (!isDup) kept.push(loc);
+      });
+      entries = gasEntries.concat(kept);
+      persist();
+      renderHome();
     }
   });
 }
