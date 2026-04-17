@@ -205,12 +205,30 @@ body {
 .sbd-card { margin: 0 14px 14px; background: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
 .sr { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid #E5E5EA; }
 .sr:last-child { border-bottom: none; }
+.sr.clickable { cursor: pointer; }
+.sr.clickable:active { background: #F8F8F8; }
+.sr-arrow { font-size: 10px; color: #CCCCCC; flex-shrink: 0; transition: transform 0.2s; }
+.sr.open .sr-arrow { transform: rotate(90deg); color: #2D6A4F; }
 .sd { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .sn { flex: 1; font-size: 12px; font-weight: 500; color: #1A1A1A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbw { width: 46px; height: 3px; background: #EEEEEE; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
 .sbb { height: 100%; border-radius: 2px; }
 .sp { font-size: 11px; font-weight: 600; color: #AAAAAA; min-width: 30px; text-align: right; }
 .sa { font-size: 12px; font-weight: 600; color: #1A1A1A; min-width: 62px; text-align: right; }
+
+/* カテゴリ展開明細 */
+.sr-details { display: none; background: #FAFAFA; border-bottom: 0.5px solid #E5E5EA; }
+.sr-details.open { display: block; }
+.sr-det {
+  display: flex; align-items: center; padding: 9px 14px 9px 30px; gap: 8px;
+  border-bottom: 0.5px solid #F0F0F0;
+}
+.sr-det:last-child { border-bottom: none; }
+.sr-det-date { font-size: 11px; font-weight: 600; color: #2D6A4F; flex-shrink: 0; min-width: 42px; }
+.sr-det-info { flex: 1; min-width: 0; overflow: hidden; }
+.sr-det-title { font-size: 12px; color: #1A1A1A; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-det-pay { font-size: 10px; color: #AAAAAA; margin-top: 1px; }
+.sr-det-amt { font-size: 12px; font-weight: 600; color: #C0392B; flex-shrink: 0; }
 
 /* ── アクションシート ── */
 .overlay {
@@ -425,7 +443,7 @@ body {
           <span style="display:flex;align-items:center;gap:4px;"><i style="background:#E74C3C;display:inline-block;width:10px;height:10px;border-radius:2px;"></i>支出</span>
         </div>
       </div>
-      <div class="sec">カテゴリ別明細（割合付き）</div>
+      <div class="sec">カテゴリ別明細（割合付き）　<span style="font-size:10px;font-weight:400;color:#CCCCCC;">月次はタップで展開</span></div>
       <div class="sbd-card" id="sbd"></div>
       <div style="height:8px"></div>
     </div>
@@ -827,6 +845,16 @@ function renderHome() {
 }
 
 // ── 集計 ──
+// ── カテゴリ明細の展開/折りたたみ ──
+function toggleCatDetail(idx) {
+  var det = document.getElementById('sr-det-' + idx);
+  if (!det) return;
+  var sr = det.previousElementSibling;
+  var isOpen = det.classList.contains('open');
+  det.classList.toggle('open');
+  if (sr) sr.classList.toggle('open');
+}
+
 function setTab(t) {
   stTab = t;
   document.getElementById('tab-m').classList.toggle('on', t === 'monthly');
@@ -876,12 +904,51 @@ function renderStats() {
     sbd.innerHTML = '<div class="empty"><div class="ei">\u{1F4ED}</div><p class="ep">\u652F\u51FA\u30C7\u30FC\u30BF\u304C\u3042\u308A\u307E\u305B\u3093</p></div>';
   } else {
     var maxA = sorted[0][1] || 1;
-    sbd.innerHTML = sorted.map(function(item) {
-      var cat = item[0], amt = item[1];
-      var pct = exp > 0 ? Math.round(amt / exp * 100) : 0;
-      var c = clr(cat);
-      return '<div class="sr"><div class="sd" style="background:' + c + '"></div><div class="sn">' + cat + '</div><div class="sbw"><div class="sbb" style="width:' + Math.round(amt / maxA * 100) + '%;background:' + c + '"></div></div><div class="sp">' + pct + '%</div><div class="sa">\xA5' + fmt(amt) + '</div></div>';
-    }).join('');
+    if (stTab === 'monthly') {
+      // 月次：タップで明細展開
+      sbd.innerHTML = sorted.map(function(item, idx) {
+        var cat = item[0], amt = item[1];
+        var pct = exp > 0 ? Math.round(amt / exp * 100) : 0;
+        var c = clr(cat);
+        // カテゴリ行（タップ可能）
+        var row = '<div class="sr clickable" onclick="toggleCatDetail(' + idx + ')">';
+        row += '<div class="sd" style="background:' + c + '"></div>';
+        row += '<div class="sn">' + cat + '</div>';
+        row += '<div class="sbw"><div class="sbb" style="width:' + Math.round(amt / maxA * 100) + '%;background:' + c + '"></div></div>';
+        row += '<div class="sp">' + pct + '%</div>';
+        row += '<div class="sa">\xA5' + fmt(amt) + '</div>';
+        row += '<div class="sr-arrow">\u203A</div>';
+        row += '</div>';
+        // 明細パネル（初期非表示）
+        var catEntries = es.filter(function(e) { return e.type === 'expense' && e.category === cat; });
+        catEntries.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+        row += '<div class="sr-details" id="sr-det-' + idx + '">';
+        row += catEntries.map(function(e) {
+          var dp = (e.date || '').replace(/-/g, '/').split('/');
+          var mmdd = dp.length === 3 ? (dp[1] + '/' + dp[2]) : e.date;
+          var det = '<div class="sr-det">';
+          det += '<div class="sr-det-date">' + mmdd + '</div>';
+          det += '<div class="sr-det-info">';
+          det += '<div class="sr-det-title">' + (e.title || '\u2014') + '</div>';
+          var payMemo = [e.payment, e.memo].filter(Boolean).join(' \u00B7 ');
+          if (payMemo) det += '<div class="sr-det-pay">' + payMemo + '</div>';
+          det += '</div>';
+          det += '<div class="sr-det-amt">-\xA5' + fmt(e.amount) + '</div>';
+          det += '</div>';
+          return det;
+        }).join('');
+        row += '</div>';
+        return row;
+      }).join('');
+    } else {
+      // 年次：従来通り（タップ不可）
+      sbd.innerHTML = sorted.map(function(item) {
+        var cat = item[0], amt = item[1];
+        var pct = exp > 0 ? Math.round(amt / exp * 100) : 0;
+        var c = clr(cat);
+        return '<div class="sr"><div class="sd" style="background:' + c + '"></div><div class="sn">' + cat + '</div><div class="sbw"><div class="sbb" style="width:' + Math.round(amt / maxA * 100) + '%;background:' + c + '"></div></div><div class="sp">' + pct + '%</div><div class="sa">\xA5' + fmt(amt) + '</div></div>';
+      }).join('');
+    }
   }
 }
 
