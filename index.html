@@ -98,6 +98,7 @@ body {
 .ent-info { flex: 1; min-width: 0; }
 .ent-cat-row { display: flex; align-items: baseline; gap: 7px; }
 .ent-date { font-size: 11px; font-weight: 600; color: #2D6A4F; flex-shrink: 0; letter-spacing: 0.3px; }
+.ent-unsync { font-size: 8px; color: #E67E22; flex-shrink: 0; margin-left: 2px; }
 .ent-cat { font-size: 13px; font-weight: 700; color: #1A1A1A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ent-ttl { font-size: 12px; color: #666666; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ent-sub { font-size: 11px; color: #AAAAAA; margin-top: 1px; }
@@ -354,8 +355,6 @@ body {
           </div>
         </div>
       </div>
-      <div class="sec">カテゴリ別支出</div>
-      <div class="card" id="h-bd"></div>
       <div class="sec">履歴一覧　<span style="font-size:10px;font-weight:400;color:#CCCCCC;">（タップで編集・削除）</span></div>
       <div class="ents" id="h-ent"></div>
     </div>
@@ -686,7 +685,7 @@ function saveEntry() {
     entries.push(newEntry);
     persist();
 
-    // GAS送信 → 成功時rowIndexを保存
+    // GAS送信 → 成功時rowIndexを保存、失敗時は警告
     var aParams = [
       'action=addEntry',
       'pw='            + encodeURIComponent(GAS_PW),
@@ -708,6 +707,8 @@ function saveEntry() {
             break;
           }
         }
+      } else {
+        toast('\u26A0 \u540C\u671F\u5F85\u3061\uFF08\u66F4\u65B0\u30DC\u30BF\u30F3\u3067\u518D\u9001\uFF09');
       }
     });
     toast('\u4FDD\u5B58\u3057\u307E\u3057\u305F \u2713');
@@ -804,26 +805,6 @@ function renderHome() {
   document.getElementById('h-exp').textContent = fmt(exp);
   document.getElementById('h-bal').textContent = fmt(inc - exp);
 
-  var catMap = {};
-  mes.forEach(function(e) {
-    if (e.type === 'expense') catMap[e.category] = (catMap[e.category] || 0) + e.amount;
-  });
-  var sorted = Object.keys(catMap).map(function(k) { return [k, catMap[k]]; });
-  sorted.sort(function(a, b) { return b[1] - a[1]; });
-  sorted = sorted.slice(0, 6);
-  var maxA = sorted.length > 0 ? sorted[0][1] : 1;
-  var bd = document.getElementById('h-bd');
-  if (!sorted.length) {
-    bd.innerHTML = '<div class="empty"><div class="ei">\u{1F4ED}</div><p class="ep">\u4ECA\u6708\u306E\u652F\u51FA\u306F\u307E\u3060\u3042\u308A\u307E\u305B\u3093</p></div>';
-  } else {
-    bd.innerHTML = sorted.map(function(item) {
-      var cat = item[0], amt = item[1];
-      var pct = exp > 0 ? Math.round(amt / exp * 100) : 0;
-      var c = clr(cat);
-      return '<div class="bd-row"><div class="bd-dot" style="background:' + c + '"></div><div class="bd-nm">' + cat + '</div><div class="bd-bw"><div class="bd-b" style="width:' + Math.round(amt / maxA * 100) + '%;background:' + c + '"></div></div><div class="bd-pct">' + pct + '%</div><div class="bd-amt">\xA5' + fmt(amt) + '</div></div>';
-    }).join('');
-  }
-
   // 全件表示（件数制限なし）、日付の新しい順
   var recent = mes.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
   var ew = document.getElementById('h-ent');
@@ -841,7 +822,9 @@ function renderHome() {
       var html = '<div class="ent" onclick="showActionSheet(' + e.id + ')">';
       html += '<div class="ent-ico" style="background:' + bg + '">' + ico + '</div>';
       html += '<div class="ent-info">';
-      html += '<div class="ent-cat-row"><span class="ent-date">' + mmdd + '</span><span class="ent-cat">' + e.category + '</span></div>';
+      html += '<div class="ent-cat-row"><span class="ent-date">' + mmdd + '</span><span class="ent-cat">' + e.category + '</span>';
+      if (!e.rowIndex) html += '<span class="ent-unsync">\u25CF</span>';
+      html += '</div>';
       if (e.title) html += '<div class="ent-ttl">' + e.title + '</div>';
       var sub = [e.payment, e.memo].filter(Boolean).join(' \u00B7 ');
       if (sub) html += '<div class="ent-sub">' + sub + '</div>';
@@ -1021,46 +1004,94 @@ function renderBar() {
   }).join('');
 }
 
-// ── 手動更新 ──
+// ── 未同期エントリをGASに再送 ──
+function pushUnsynced(callback) {
+  if (!GAS_URL) { if (callback) callback(0); return; }
+  var unsynced = entries.filter(function(e) { return !e.rowIndex; });
+  if (!unsynced.length) { if (callback) callback(0); return; }
+  var remaining = unsynced.length;
+  var sentCount = 0;
+  unsynced.forEach(function(entry) {
+    var typeStr = entry.type === 'expense' ? '\u652F\u51FA' : '\u53CE\u5165';
+    var params = [
+      'action=addEntry',
+      'pw='            + encodeURIComponent(GAS_PW),
+      'date='          + encodeURIComponent(entry.date || ''),
+      'type='          + encodeURIComponent(typeStr),
+      'category='      + encodeURIComponent(entry.category || ''),
+      'title='         + encodeURIComponent(entry.title || ''),
+      'amount='        + (entry.amount || 0),
+      'paymentMethod=' + encodeURIComponent(entry.payment || ''),
+      'memo='          + encodeURIComponent(entry.memo || '')
+    ].join('&');
+    var entryId = entry.id;
+    gasRequest(params, function(resp) {
+      if (resp && resp.rowIndex) {
+        for (var k = 0; k < entries.length; k++) {
+          if (entries[k].id === entryId) {
+            entries[k].rowIndex = resp.rowIndex;
+            break;
+          }
+        }
+        sentCount++;
+      }
+      remaining--;
+      if (remaining <= 0) {
+        if (sentCount > 0) persist();
+        if (callback) callback(sentCount);
+      }
+    });
+  });
+}
+
+// ── 手動更新（プル + 未同期プッシュ）──
 function syncFromGAS() {
   if (!GAS_URL) { toast('\u63A5\u7D9A\u5148\u304C\u672A\u8A2D\u5B9A\u3067\u3059'); return; }
   var btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
-  gasRequest('action=getEntries&pw=' + encodeURIComponent(GAS_PW), function(data) {
-    btn.classList.remove('spinning');
-    if (data && data.entries && data.entries.length) {
-      var gasEntries = data.entries.map(function(e) {
-        return {
-          id: e.rowIndex,
-          rowIndex: e.rowIndex,
-          date: (e.date || '').replace(/\//g, '-'),
-          type: e.type === '\u53CE\u5165' ? 'income' : 'expense',
-          category: e.category,
-          title: e.title || '',
-          amount: Number(e.amount),
-          payment: e.paymentMethod || '',
-          memo: e.memo || ''
-        };
-      });
-      var unsyncedLocal = entries.filter(function(e) { return !e.rowIndex; });
-      var kept = [];
-      unsyncedLocal.forEach(function(loc) {
-        var isDup = false;
-        for (var i = 0; i < gasEntries.length; i++) {
-          var g = gasEntries[i];
-          if (g.date === loc.date && g.category === loc.category && g.amount === loc.amount && g.type === loc.type) {
-            isDup = true; break;
+  // まず未同期をプッシュ
+  pushUnsynced(function(pushed) {
+    // 次にGASからプル
+    gasRequest('action=getEntries&pw=' + encodeURIComponent(GAS_PW), function(data) {
+      btn.classList.remove('spinning');
+      if (data && data.entries && data.entries.length) {
+        var gasEntries = data.entries.map(function(e) {
+          return {
+            id: e.rowIndex,
+            rowIndex: e.rowIndex,
+            date: (e.date || '').replace(/\//g, '-'),
+            type: e.type === '\u53CE\u5165' ? 'income' : 'expense',
+            category: e.category,
+            title: e.title || '',
+            amount: Number(e.amount),
+            payment: e.paymentMethod || '',
+            memo: e.memo || ''
+          };
+        });
+        var unsyncedLocal = entries.filter(function(e) { return !e.rowIndex; });
+        var kept = [];
+        unsyncedLocal.forEach(function(loc) {
+          var isDup = false;
+          for (var i = 0; i < gasEntries.length; i++) {
+            var g = gasEntries[i];
+            if (g.date === loc.date && g.category === loc.category && g.amount === loc.amount && g.type === loc.type) {
+              isDup = true; break;
+            }
           }
-        }
-        if (!isDup) kept.push(loc);
-      });
-      entries = gasEntries.concat(kept);
-      persist();
-      renderHome();
-      toast('\u540C\u671F\u3057\u307E\u3057\u305F \u2713');
-    } else {
-      toast('\u30C7\u30FC\u30BF\u306A\u3057');
-    }
+          if (!isDup) kept.push(loc);
+        });
+        entries = gasEntries.concat(kept);
+        persist();
+        renderHome();
+        var msg = '\u540C\u671F\u3057\u307E\u3057\u305F \u2713';
+        if (pushed > 0) msg += '\uFF08' + pushed + '\u4EF6\u518D\u9001\uFF09';
+        var stillUnsynced = entries.filter(function(e) { return !e.rowIndex; }).length;
+        if (stillUnsynced > 0) msg += '\u3010\u672A\u540C\u671F' + stillUnsynced + '\u4EF6\u3011';
+        toast(msg);
+      } else {
+        toast('\u540C\u671F\u3057\u307E\u3057\u305F \u2713');
+      }
+    });
   });
 }
 
@@ -1068,13 +1099,12 @@ function syncFromGAS() {
 renderHome();
 
 // GASからデータ取得（XMLHttpRequestで統一）
-// GASを正とし、ローカル未同期分だけ残す
+// GASを正とし、ローカル未同期分だけ残す → 未同期分はGASに再送
 if (GAS_URL) {
   showLoading();
   gasRequest('action=getEntries&pw=' + encodeURIComponent(GAS_PW), function(data) {
     hideLoading();
     if (data && data.entries && data.entries.length) {
-      // GASから来たデータをマスターとして構築
       var gasEntries = data.entries.map(function(e) {
         return {
           id: e.rowIndex,
@@ -1088,9 +1118,7 @@ if (GAS_URL) {
           memo: e.memo || ''
         };
       });
-      // ローカルにしかないエントリ（rowIndex無し＝未同期）を保持
       var unsyncedLocal = entries.filter(function(e) { return !e.rowIndex; });
-      // 未同期分がGASデータと内容重複していないかチェック
       var kept = [];
       unsyncedLocal.forEach(function(loc) {
         var isDup = false;
@@ -1106,6 +1134,13 @@ if (GAS_URL) {
       persist();
       renderHome();
     }
+    // 未同期エントリがあれば自動再送
+    pushUnsynced(function(sent) {
+      if (sent > 0) {
+        renderHome();
+        toast(sent + '\u4EF6\u3092\u518D\u540C\u671F\u3057\u307E\u3057\u305F');
+      }
+    });
   });
 }
 </script>
